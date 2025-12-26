@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astronomy IR</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="card">
+    <header>
+      <h1>🌌 Astronomy IR</h1>
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('search')">Pencarian</button>
+        <button class="tab" onclick="setTab('upload')">Upload Data</button>
+      </div>
+    </header>
+
+    <div id="view-search">
+      <div class="input-group">
+        <input type="text" id="q" placeholder="Cari planet, bintang, galaxygi..." onkeypress="handleEnter(event)">
+        <button onclick="doSearch()" id="btn-search">Cari</button>
+      </div>
+      <div id="res-search" class="results"></div>
+    </div>
+
+    <div id="view-upload" class="hidden">
+      <div class="upload-area">
+        <input type="file" id="f" accept=".pdf,.txt,.zip">
+        <p id="fname">Pilih file (.pdf, .txt, .zip)</p>
+        <button onclick="doUpload()" id="btn-upload" disabled>Upload</button>
+      </div>
+      <div id="res-upload" class="status"></div>
+    </div>
+  </div>
+    <footer>
+      <p>© 2025 Astronomy IR | Rico, Viktor</p>
+    </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>
