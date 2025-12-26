@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astronomy IR | Sistem Pencarian Astronomi</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Background dengan bintang-bintang animasi -->
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="stars3"></div>
+  
+  <!-- Planet animasi -->
+  <div class="planet planet1"></div>
+  <div class="planet planet2"></div>
+  <div class="planet planet3"></div>
+
+  <!-- Modal PDF Preview -->
+  <div id="pdfModal" class="modal hidden">
+    <div class="modal-content cosmic-modal">
+      <div class="modal-header">
+        <h3 id="modalTitle"><i class="fas fa-file-pdf"></i> Preview Dokumen</h3>
+        <button class="close-modal" onclick="closePDFModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="pdf-info">
+          <div class="pdf-meta">
+            <p><i class="fas fa-calendar"></i> <span id="modalDate"></span></p>
+            <p><i class="fas fa-tag"></i> <span id="modalType"></span></p>
+            <p><i class="fas fa-percentage"></i> <span id="modalScore"></span></p>
+          </div>
+          <a id="downloadBtn" class="cosmic-btn small" target="_blank">
+            <i class="fas fa-download"></i> Download
+          </a>
+        </div>
+        <div class="pdf-preview-container">
+          <iframe id="pdfViewer" class="pdf-viewer" frameborder="0"></iframe>
+          <div class="pdf-placeholder" id="pdfPlaceholder">
+            <i class="fas fa-file-pdf"></i>
+            <p>Preview PDF tidak tersedia untuk dokumen ini</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card cosmic-card">
+      <header class="cosmic-header">
+        <div class="title-container">
+          <i class="fas fa-star title-star"></i>
+          <h1 class="cosmic-title">🌌 Astronomy IR</h1>
+          <i class="fas fa-star title-star"></i>
+        </div>
+        <p class="subtitle">Sistem Pencarian Dokumen Astronomi</p>
+        
+        <div class="tabs">
+          <button class="tab cosmic-tab active" onclick="setTab('search')">
+            <i class="fas fa-search"></i> Pencarian
+          </button>
+          <button class="tab cosmic-tab" onclick="setTab('upload')">
+            <i class="fas fa-upload"></i> Upload Data
+          </button>
+        </div>
+      </header>
+
+      <!-- View Pencarian -->
+      <div id="view-search" class="cosmic-view">
+        <div class="input-group cosmic-input">
+          <div class="input-wrapper">
+            <i class="fas fa-search input-icon"></i>
+            <input type="text" id="q" placeholder="Cari planet, bintang, galaksi, nebula..." onkeypress="handleEnter(event)">
+          </div>
+          <button onclick="doSearch()" id="btn-search" class="cosmic-btn">
+            <i class="fas fa-rocket"></i> Jelajahi
+          </button>
+        </div>
+        
+        <!-- Filter Relevansi -->
+        <div class="filter-section">
+          <label for="relevanceFilter" class="filter-label">
+            <i class="fas fa-filter"></i> Filter Relevansi Minimum:
+          </label>
+          <select id="relevanceFilter" class="filter-select" onchange="filterResults()">
+            <option value="0">Semua</option>
+            <option value="0.3">30%</option>
+            <option value="0.5" selected>50%</option>
+            <option value="0.7">70%</option>
+            <option value="0.9">90%</option>
+          </select>
+        </div>
+        
+        <!-- Loading Animation -->
+        <div id="loading" class="hidden">
+          <div class="loading-animation">
+            <div class="spinner">
+              <div class="orbit">
+                <div class="satellite"></div>
+              </div>
+            </div>
+            <p class="loading-text">Memindai dokumen astronomi...</p>
+          </div>
+        </div>
+        
+        <!-- Info Hasil -->
+        <div id="searchInfo" class="search-info hidden">
+          <p id="resultCount"></p>
+          <p id="queryInfo"></p>
+        </div>
+        
+        <!-- Results Container -->
+        <div id="res-search" class="results cosmic-results"></div>
+        
+        <!-- Pagination -->
+        <div id="pagination" class="pagination hidden">
+          <button id="prevBtn" class="pagination-btn" onclick="prevPage()" disabled>
+            <i class="fas fa-chevron-left"></i> Sebelumnya
+          </button>
+          <span id="pageInfo" class="page-info">Halaman 1 dari 1</span>
+          <button id="nextBtn" class="pagination-btn" onclick="nextPage()" disabled>
+            Selanjutnya <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- No Results -->
+        <div id="noResults" class="no-results hidden">
+          <i class="fas fa-search"></i>
+          <h3>Tidak Ada Hasil</h3>
+          <p>Tidak ada dokumen yang memenuhi kriteria pencarian Anda.</p>
+          <button onclick="resetSearch()" class="cosmic-btn small">
+            <i class="fas fa-redo"></i> Cari Ulang
+          </button>
+        </div>
+      </div>
+
+      <!-- View Upload -->
+      <div id="view-upload" class="cosmic-view hidden">
+        <div class="upload-area cosmic-upload">
+          <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+          <p class="upload-text">Upload dokumen astronomi Anda</p>
+          <p class="upload-subtext">Format yang didukung: PDF, TXT, ZIP</p>
+          
+          <div class="file-input-wrapper">
+            <input type="file" id="f" accept=".pdf,.txt,.zip">
+            <label for="f" class="file-label">
+              <i class="fas fa-folder-open"></i> Pilih File
+            </label>
+          </div>
+          
+          <p id="fname" class="file-name">Belum ada file yang dipilih</p>
+          
+          <button onclick="doUpload()" id="btn-upload" disabled class="cosmic-btn">
+            <i class="fas fa-upload"></i> Upload ke Galaksi
+          </button>
+        </div>
+        <div id="res-upload" class="status"></div>
+      </div>
+    </div>
+    </div>
+    
+    <footer class="cosmic-footer">
+      <p><i class="fas fa-copyright"></i> 2025 Astronomy IR | Rico & Viktor</p>
+      <p class="footer-subtext">Sistem Informasi Retrieval untuk Dokumen Astronomi</p>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

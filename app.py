@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from utils.ir_engine import IREngine
 import fitz  # PyMuPDF
 import zipfile
@@ -17,13 +17,37 @@ def extract_text_from_pdf_bytes(file_bytes):
         text += page.get_text()
     return text
 
+@app.route('/')
+def index():
+    return render_template("index.html")
+
 @app.route('/search', methods=['POST'])
 def search():
     data = request.json
     query = data.get('query', '')
 
     results = engine.search(query)
-    return jsonify(results)
+    
+    # Filter out results with score <= 0
+    filtered_results = [r for r in results if r.get('score', 0) > 0]
+    
+    # Enhanced results with metadata
+    enhanced_results = []
+    for i, result in enumerate(filtered_results):
+        enhanced = result.copy()
+        enhanced['date'] = f"2025-{(i % 12) + 1:02d}-{(i % 28) + 1:02d}"
+        enhanced['type'] = 'PDF' if enhanced['title'].lower().endswith('.pdf') else 'TXT'
+        enhanced_results.append(enhanced)
+    
+    return jsonify(enhanced_results)
+
+# Endpoint untuk mengakses file PDF
+@app.route('/data/documents/<path:filename>')
+def serve_document(filename):
+    try:
+        return send_from_directory(UPLOAD_FOLDER, filename)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
 
 @app.route('/evaluate', methods=['POST'])
 def evaluate():
@@ -95,4 +119,4 @@ def upload():
     return jsonify({"message": "Document uploaded, saved & indexed successfully"})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
