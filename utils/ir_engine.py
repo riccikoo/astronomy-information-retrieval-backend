@@ -45,20 +45,65 @@ class IREngine:
             snippet = snippet + "..."
         return snippet
 
+    # pake corpus.json
+    # def search(self, query):
+    #     query_processed = preprocess(query)
+    #     query_vec = self.vectorizer.transform([query_processed])
+    #     scores = cosine_similarity(query_vec, self.tfidf_matrix)[0]
+
+    #     results = []
+    #     for i, score in enumerate(scores):
+    #         if score > 0: # Hanya ambil yang relevan
+    #             content = self.documents[i]['content']
+    #             results.append({
+    #                 "title": self.documents[i]['title'],
+    #                 "score": round(float(score), 4),
+    #                 "snippet": self.get_snippet(content, query),
+    #                 "summary": self.generate_summary(content) # Menampilkan ringkasan
+    #             })
+
+    #     results.sort(key=lambda x: x['score'], reverse=True)
+    #     return results
+    
+    #pake inverted_index.json
     def search(self, query):
         query_processed = preprocess(query)
+        query_terms = query_processed.split()
+
+        # Load inverted index
+        with open('data/inverted_index.json', 'r') as f:
+            inverted_index = json.load(f)
+
+        # 1. Ambil dokumen kandidat dari inverted index
+        candidate_titles = set()
+        for term in query_terms:
+            if term in inverted_index:
+                candidate_titles.update(inverted_index[term])
+
+        # Kalau tidak ada kandidat, langsung return kosong
+        if not candidate_titles:
+            return []
+
+        # 2. Ambil index dokumen kandidat
+        candidate_indices = [
+            i for i, doc in enumerate(self.documents)
+            if doc['title'] in candidate_titles
+        ]
+
+        # 3. Hitung similarity hanya untuk kandidat
         query_vec = self.vectorizer.transform([query_processed])
-        scores = cosine_similarity(query_vec, self.tfidf_matrix)[0]
+        candidate_matrix = self.tfidf_matrix[candidate_indices]
+        scores = cosine_similarity(query_vec, candidate_matrix)[0]
 
         results = []
-        for i, score in enumerate(scores):
-            if score > 0: # Hanya ambil yang relevan
-                content = self.documents[i]['content']
+        for idx, score in zip(candidate_indices, scores):
+            if score > 0:
+                content = self.documents[idx]['content']
                 results.append({
-                    "title": self.documents[i]['title'],
+                    "title": self.documents[idx]['title'],
                     "score": round(float(score), 4),
                     "snippet": self.get_snippet(content, query),
-                    "summary": self.generate_summary(content) # Menampilkan ringkasan
+                    "summary": self.generate_summary(content)
                 })
 
         results.sort(key=lambda x: x['score'], reverse=True)
